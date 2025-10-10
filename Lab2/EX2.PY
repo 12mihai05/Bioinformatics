@@ -1,186 +1,146 @@
-# Design an application by using AI, which contains a GUI that allows the user to select a fasta file. The content
-# of the fasta file should be analyzed by using a sliding window of 30 positions. The content for each sliding window 
-# should be used in order to extract/compute the relative frequencies of the nucleoids formed in the aphabet of the 
-# sequence . The output of the app should be a chart containing 4 signals, one signal for each symbol for the alphabet of the sequence.
-# In order to plot this chart first, the vector that contains the relative frequencies for each symbol must be ccalculated
-# And only then plotted
+# find in sequence S only the dinucleodites and trinucleodites that exist, without the use of the brute force engine.
+# In order to achive the result one must verify each combination starting from the beggining of sequence S 
+# Example: ABAA we have AB, BA, AA, ABA
 
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import os
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
+from tkinter import ttk, scrolledtext, messagebox
+from collections import Counter
+
+def scan_kmers(sequence: str, k: int):
+    n = len(sequence)
+    total = max(n - k + 1, 0)
+    counts = Counter()
+    for i in range(total):
+        kmer = sequence[i:i+k]
+        counts[kmer] += 1
+    return counts, total
+
+def rel_freq(count: int, total_windows: int) -> float:
+    return (count / total_windows * 100.0) if total_windows > 0 else 0.0
 
 
-ALPHABET = ("A", "C", "G", "T")
+class KmerScannerGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Observed Di/Trinucleotides (No Brute Force)")
+        self.root.geometry("800x600")
+        self.root.resizable(True, True)
 
-def read_fasta(path: str) -> str:
-    """Read a FASTA file; concatenate all sequence lines; return uppercase string."""
-    seq_parts = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith(">"):
-                continue
-            seq_parts.append(line)
-    return "".join(seq_parts).upper()
+        self.default_sequence = "ATTGTCCCAATCTGTTG"
+        self._build_ui()
 
-def sliding_window(seq: str, k: int):
-    """Yield all contiguous windows of length k from seq."""
-    n = len(seq)
-    for i in range(0, n - k + 1):
-        yield seq[i:i+k]
-
-def relative_freqs_for_window(win: str):
-    """
-    For a window string, compute relative freq for A,C,G,T as count / len(win).
-    (If there are other characters like 'N', the 4 freqs may sum to < 1.)
-    Returns a dict: {'A': fa, 'C': fc, 'G': fg, 'T': ft}
-    """
-    L = len(win)
-    if L == 0:
-        return {b: 0.0 for b in ALPHABET}
-    counts = {b: 0 for b in ALPHABET}
-    for ch in win:
-        if ch in counts:
-            counts[ch] += 1
-    return {b: counts[b] / L for b in ALPHABET}
-
-def frequency_vectors(seq: str, k: int):
-    """
-    Build the 4 frequency vectors (one per base) over all sliding windows of size k.
-    Returns dict: {'A': [...], 'C': [...], 'G': [...], 'T': [...]}
-    """
-    vecs = {b: [] for b in ALPHABET}
-    for win in sliding_window(seq, k):
-        freqs = relative_freqs_for_window(win)
-        for b in ALPHABET:
-            vecs[b].append(freqs[b])
-    return vecs
-
-
-class App(ttk.Frame):
-    def __init__(self, master):
-        super().__init__(master)
-        master.title("FASTA Sliding-Window Nucleotide Frequencies")
-        master.geometry("900x600")
-        self.pack(fill=tk.BOTH, expand=True)
-
-        self.seq = ""
-        self.freq_vecs = None
-
-        self._build_controls()
-        self._build_plot()
-
-    def _build_controls(self):
-        bar = ttk.Frame(self)
+    def _build_ui(self):
+        bar = ttk.Frame(self.root)
         bar.pack(fill=tk.X, padx=8, pady=6)
 
-        self.path_var = tk.StringVar()
-        ttk.Label(bar, text="FASTA:").pack(side=tk.LEFT)
-        self.path_entry = ttk.Entry(bar, textvariable=self.path_var, width=60, state="readonly")
-        self.path_entry.pack(side=tk.LEFT, padx=6)
+        ttk.Label(bar, text="DNA sequence:").pack(side=tk.LEFT)
+        self.sequence_entry = ttk.Entry(bar, width=80)
+        self.sequence_entry.pack(side=tk.LEFT, padx=6)
+        self.sequence_entry.insert(0, self.default_sequence)
 
-        ttk.Button(bar, text="Browse…", command=self.on_browse).pack(side=tk.LEFT, padx=4)
+        ttk.Button(bar, text="Analyze", command=self.analyze_sequence).pack(side=tk.LEFT, padx=4)
+        ttk.Button(bar, text="Clear", command=self.clear_results).pack(side=tk.LEFT, padx=4)
 
-        ttk.Label(bar, text="Window (k):").pack(side=tk.LEFT, padx=(12,4))
-        self.k_var = tk.StringVar(value="30")
-        self.k_entry = ttk.Entry(bar, textvariable=self.k_var, width=6)
-        self.k_entry.pack(side=tk.LEFT)
+        self.nb = ttk.Notebook(self.root)
+        self.nb.pack(fill=tk.BOTH, expand=True, padx=8, pady=6)
 
-        ttk.Button(bar, text="Analyze & Plot", command=self.on_analyze).pack(side=tk.LEFT, padx=8)
+        self.tab2 = ttk.Frame(self.nb)
+        self.nb.add(self.tab2, text="Observed dinucleotides (k=2)")
+        self.k2_text = scrolledtext.ScrolledText(self.tab2, wrap=tk.NONE, font=("Consolas", 10))
+        self.k2_text.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
-        self.status_var = tk.StringVar(value="Pick a FASTA file to begin.")
-        ttk.Label(self, textvariable=self.status_var, anchor="w").pack(fill=tk.X, padx=8, pady=(0, 6))
+        self.tab3 = ttk.Frame(self.nb)
+        self.nb.add(self.tab3, text="Observed trinucleotides (k=3)")
+        self.k3_text = scrolledtext.ScrolledText(self.tab3, wrap=tk.NONE, font=("Consolas", 10))
+        self.k3_text.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
-    def _build_plot(self):
-        self.fig = Figure(figsize=(6.5, 4.5), dpi=100)
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlabel("Window index")
-        self.ax.set_ylabel("Relative frequency")
-        self.ax.set_title("A/C/G/T frequencies over sliding windows")
+        self.tabS = ttk.Frame(self.nb)
+        self.nb.add(self.tabS, text="Summary")
+        self.sum_text = scrolledtext.ScrolledText(self.tabS, wrap=tk.WORD, font=("Consolas", 10))
+        self.sum_text.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
-        self.canvas_widget = self.canvas.get_tk_widget()
-        self.canvas_widget.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        self.status_var = tk.StringVar(value="Ready")
+        ttk.Label(self.root, textvariable=self.status_var, anchor="w").pack(fill=tk.X, padx=8, pady=(0,6))
 
+    def clear_results(self):
+        self.k2_text.delete("1.0", tk.END)
+        self.k3_text.delete("1.0", tk.END)
+        self.sum_text.delete("1.0", tk.END)
+        self.status_var.set("Cleared")
 
-    def on_browse(self):
-        path = filedialog.askopenfilename(
-            title="Select FASTA file",
-            filetypes=[("FASTA files", "*.fasta *.fa *.fna *.ffn *.faa *.frn"), ("All files", "*.*")]
-        )
-        if path:
-            self.path_var.set(path)
-            self.status_var.set(f"Selected: {os.path.basename(path)}")
+    def analyze_sequence(self):
+        s = self.sequence_entry.get().strip().upper()
 
-    def on_analyze(self):
-        path = self.path_var.get().strip()
-        if not path:
-            messagebox.showwarning("No file", "Please select a FASTA file.")
-            return
-        try:
-            k = int(self.k_var.get().strip())
-            if k <= 0:
-                raise ValueError
-        except Exception:
-            messagebox.showerror("Invalid window", "Window size (k) must be a positive integer.")
+        if not s:
+            messagebox.showwarning("Input", "Please enter a DNA sequence.")
             return
 
-        try:
-            self.seq = read_fasta(path)
-        except Exception as e:
-            messagebox.showerror("Read error", f"Could not read FASTA:\n{e}")
+        valid = set("ACGT")
+        if not all(ch in valid for ch in s):
+            messagebox.showerror("Invalid", "Sequence must contain only A, C, G, T.")
             return
 
-        if len(self.seq) < k:
-            messagebox.showwarning(
-                "Sequence too short",
-                f"Sequence length ({len(self.seq)}) is smaller than window size {k}."
-            )
-            self._plot_empty()
-            return
+        self.status_var.set("Scanning...")
+        self.root.update_idletasks()
 
-        self.status_var.set("Computing frequency vectors…")
-        self.update_idletasks()
-        self.freq_vecs = frequency_vectors(self.seq, k)
+        self.clear_results()
 
-        self._plot_vectors(self.freq_vecs)
-        self.status_var.set(f"Done: length={len(self.seq)} | windows={len(self.freq_vecs['A'])} | k={k}")
+        k2_counts, total2 = scan_kmers(s, 2)
+        k3_counts, total3 = scan_kmers(s, 3)
 
+        lines2 = []
+        lines2.append(f"Sequence length: {len(s)}")
+        lines2.append(f"Total windows (k=2): {total2}")
+        lines2.append("")
+        lines2.append(f"{'Dinuc':<6} {'Count':>5} {'%':>7}")
+        lines2.append("-" * 22)
 
-    def _plot_empty(self):
-        self.ax.clear()
-        self.ax.set_xlabel("Window index")
-        self.ax.set_ylabel("Relative frequency")
-        self.ax.set_title("A/C/G/T frequencies over sliding windows")
-        self.canvas.draw_idle()
+        k2_items = [(kmer, cnt) for kmer, cnt in k2_counts.items() if cnt > 0]
+        k2_items.sort(key=lambda x: (-x[1], x[0]))
 
-    def _plot_vectors(self, vecs):
-        self.ax.clear()
-        n = len(next(iter(vecs.values()))) if vecs else 0
-        x = list(range(n))
+        for kmer, cnt in k2_items:
+            pct = rel_freq(cnt, total2)
+            lines2.append(f"{kmer:<6} {cnt:>5} {pct:>6.2f}")
 
-        self.ax.plot(x, vecs["A"], label="A")
-        self.ax.plot(x, vecs["C"], label="C")
-        self.ax.plot(x, vecs["G"], label="G")
-        self.ax.plot(x, vecs["T"], label="T")
+        self.k2_text.insert("1.0", "\n".join(lines2))
 
-        self.ax.set_xlabel("Window index")
-        self.ax.set_ylabel("Relative frequency")
-        self.ax.set_title("A/C/G/T frequencies (sliding window)")
-        self.ax.set_ylim(0.0, 1.0) 
-        self.ax.legend(loc="upper right")
-        self.ax.grid(True, linestyle=":", linewidth=0.5)
+        lines3 = []
+        lines3.append(f"Sequence length: {len(s)}")
+        lines3.append(f"Total windows (k=3): {total3}")
+        lines3.append("")
+        lines3.append(f"{'Trinuc':<7} {'Count':>5} {'%':>7}")
+        lines3.append("-" * 24)
 
-        self.canvas.draw_idle()
+        k3_items = [(kmer, cnt) for kmer, cnt in k3_counts.items() if cnt > 0]
+        k3_items.sort(key=lambda x: (-x[1], x[0]))
+
+        for kmer, cnt in k3_items:
+            pct = rel_freq(cnt, total3)
+            lines3.append(f"{kmer:<7} {cnt:>5} {pct:>6.2f}")
+
+        self.k3_text.insert("1.0", "\n".join(lines3))
+
+        sum_lines = []
+        sum_lines.append(f"Sequence: {s}")
+        sum_lines.append(f"Length: {len(s)}")
+        sum_lines.append("")
+        sum_lines.append(f"Observed dinucleotides: {len(k2_items)} (out of {max(len(s)-1,0)} windows)")
+        if k2_items:
+            sum_lines.append("  First few: " + ", ".join(k for k, _ in k2_items[:8]))
+        sum_lines.append("")
+        sum_lines.append(f"Observed trinucleotides: {len(k3_items)} (out of {max(len(s)-2,0)} windows)")
+        if k3_items:
+            sum_lines.append("  First few: " + ", ".join(k for k, _ in k3_items[:8]))
+        sum_lines.append("")
+        sum_lines.append("Note: We only scan existing windows (no brute-force of all possibilities).")
+        self.sum_text.insert("1.0", "\n".join(sum_lines))
+
+        self.status_var.set("Done")
 
 
 def main():
     root = tk.Tk()
-    app = App(root)
+    app = KmerScannerGUI(root)
     root.mainloop()
 
 if __name__ == "__main__":
