@@ -1,0 +1,78 @@
+{
+  "analysis_metadata": {
+    "covid_genome_length": 29903,
+    "influenza_genome_length": 1752,
+    "covid_total_codons": 9967,
+    "influenza_total_codons": 584
+  },
+  "covid_top_amino_acids": [
+    {
+      "amino_acid_code": "L",
+      "amino_acid_name": "Leucine",
+      "count": 886,
+      "percentage": 8.89
+    },
+    {
+      "amino_acid_code": "S",
+      "amino_acid_name": "Serine",
+      "count": 810,
+      "percentage": 8.13
+    },
+    {
+      "amino_acid_code": "*",
+      "amino_acid_name": "Stop codon",
+      "count": 774,
+      "percentage": 7.77
+    },
+    {
+      "amino_acid_code": "T",
+      "amino_acid_name": "Threonine",
+      "count": 679,
+      "percentage": 6.81
+    },
+    {
+      "amino_acid_code": "C",
+      "amino_acid_name": "Cysteine",
+      "count": 635,
+      "percentage": 6.37
+    }
+  ],
+  "influenza_top_amino_acids": [
+    {
+      "amino_acid_code": "T",
+      "amino_acid_name": "Threonine",
+      "count": 48,
+      "percentage": 8.22
+    },
+    {
+      "amino_acid_code": "Q",
+      "amino_acid_name": "Glutamine",
+      "count": 46,
+      "percentage": 7.88
+    },
+    {
+      "amino_acid_code": "L",
+      "amino_acid_name": "Leucine",
+      "count": 45,
+      "percentage": 7.71
+    },
+    {
+      "amino_acid_code": "K",
+      "amino_acid_name": "Lysine",
+      "count": 44,
+      "percentage": 7.53
+    },
+    {
+      "amino_acid_code": "*",
+      "amino_acid_name": "Stop codon",
+      "count": 43,
+      "percentage": 7.36
+    }
+  ],
+  "target_amino_acids": [
+    "Glutamine",
+    "Threonine",
+    "Serine",
+    "Leucine"
+  ]
+}
