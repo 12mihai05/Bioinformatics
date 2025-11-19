@@ -1,0 +1,29 @@
+TRANSPOSON DETECTION REPORT
+
+Three bacterial genomes were downloaded from NCBI:
+- E. coli MG1655 (NC_000913.3): 4,641,652 bp
+- B. subtilis 168 (NC_000964.3): 4,215,606 bp
+- P. aeruginosa PAO1 (NC_002516.2): 6,264,404 bp
+
+The script searched for inverted repeats (4-6 bp length, max 30 bp spacer) as potential 
+transposon markers. An inverted repeat is when a sequence appears with its reverse 
+complement nearby.
+
+Results:
+- E. coli: 898,289 inverted repeats found
+  Examples: CTCT at positions 33-36 and 52-55 (spacer 15 bp)
+            GCAG at positions 65-68 and 85-88 (spacer 16 bp)
+
+- B. subtilis: 877,564 inverted repeats found
+  Examples: GGTT at positions 31-34 and 58-61 (spacer 23 bp)
+            CACA at positions 49-52 and 64-67 (spacer 11 bp)
+
+- P. aeruginosa: 1,847,254 inverted repeats found
+  Examples: GACC at positions 8-11 and 39-42 (spacer 27 bp)
+            CGAT at positions 14-17 and 27-30 (spacer 9 bp)
+
+The numbers are huge because short sequences (4-6 bp) appear many times by pure chance 
+in large genomes. Most of these are not real transposons. Real transposons usually have 
+longer inverted repeats (>20 bp) and contain transposase genes. Finding real transposons 
+would need more specific criteria like checking for associated genes and longer repeat 
+sequences.
