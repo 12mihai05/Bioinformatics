@@ -1,0 +1,105 @@
+{
+  "beach": {
+    "forest": 1.0
+  },
+  "birds": {
+    "brown": 0.5,
+    "sun": 0.5
+  },
+  "brown": {
+    "house": 0.5,
+    "night": 0.5
+  },
+  "country": {
+    "beach": 0.333333,
+    "lazy": 0.333333,
+    "people": 0.333333
+  },
+  "day": {
+    "moon": 0.5,
+    "night": 0.5
+  },
+  "earth": {
+    "fox": 1.0
+  },
+  "evening": {
+    "brown": 0.5,
+    "sea": 0.5
+  },
+  "forest": {
+    "evening": 0.5,
+    "house": 0.5
+  },
+  "fox": {
+    "birds": 0.333333,
+    "night": 0.333333,
+    "people": 0.333333
+  },
+  "house": {
+    "lazy": 0.5,
+    "river": 0.5
+  },
+  "island": {
+    "island": 0.5,
+    "sky": 0.5
+  },
+  "jumps": {
+    "moon": 1.0
+  },
+  "lazy": {
+    "country": 0.5,
+    "sea": 0.5
+  },
+  "moon": {
+    "birds": 0.333333,
+    "island": 0.333333,
+    "the": 0.333333
+  },
+  "morning": {
+    "country": 1.0
+  },
+  "mountains": {
+    "moon": 1.0
+  },
+  "night": {
+    "morning": 0.333333,
+    "mountains": 0.333333,
+    "runs": 0.333333
+  },
+  "over": {
+    "road": 1.0
+  },
+  "people": {
+    "day": 0.333333,
+    "forest": 0.333333,
+    "the": 0.333333
+  },
+  "river": {
+    "jumps": 0.5,
+    "runs": 0.5
+  },
+  "road": {
+    "forest": 1.0
+  },
+  "runs": {
+    "over": 0.5,
+    "people": 0.5
+  },
+  "sea": {
+    "day": 0.5,
+    "earth": 0.5
+  },
+  "sky": {
+    "river": 1.0
+  },
+  "sun": {
+    "fox": 1.0
+  },
+  "the": {
+    "evening": 0.5,
+    "fox": 0.5
+  },
+  "through": {
+    "country": 1.0
+  }
+}
